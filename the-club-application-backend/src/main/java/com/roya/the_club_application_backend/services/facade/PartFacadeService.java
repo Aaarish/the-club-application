@@ -20,9 +20,9 @@ public class PartFacadeService {
     private final PartService partService;
     private final CommonUtils commonUtils;
 
-    public AppResponse addPartToTask(String taskId, String roomId, Object proof, String note, String userId) throws ResourceNotFoundException {
+    public AppResponse addPartToTask(String taskId, String roomId, String note, String userId) throws ResourceNotFoundException {
         Member member = commonUtils.findMemberByRoomIdAndUserId(roomId, userId);
-        PartResponse partResponse = partService.addPartToTask(taskId, member.getMemberId(), proof, note);
+        PartResponse partResponse = partService.addPartToTask(taskId, member.getMemberId(), note);
 
         return AppResponse.builder()
                 .source(TASK)
@@ -33,7 +33,7 @@ public class PartFacadeService {
     }
 
     public AppResponse getAllPartsForTask(String taskId, String roomId, String userId) throws AccessDeniedException {
-        commonUtils.checkIfUserIsARoomMember(userId, roomId);
+        commonUtils.checkIfUserIsARoomMember(roomId, userId);
         List<PartResponse> partsForTask = partService.getAllPartsForTask(taskId);
 
         return AppResponse.builder()
@@ -45,7 +45,7 @@ public class PartFacadeService {
     }
 
     public AppResponse getPartOfMember(String taskId, String roomId, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsARoomMember(userId, roomId);
+        commonUtils.checkIfUserIsARoomMember(roomId, userId);
         Member member = commonUtils.findMemberByRoomIdAndUserId(roomId, userId);
 
         PartResponse partForMember = partService.getPartOfMember(taskId, member.getMemberId());

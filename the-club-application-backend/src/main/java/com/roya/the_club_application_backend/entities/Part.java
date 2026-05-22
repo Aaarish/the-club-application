@@ -7,6 +7,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 
 @Entity
@@ -22,8 +23,8 @@ public class Part {
 
     public Part() {}
 
-    public Part(String taskId, String memberId, Object proof, String note) {
-        this.partId = taskId + "__" + memberId;
+    public Part(String taskId, String memberId, String note) {
+        this.partId = UUID.randomUUID().toString();
         this.taskId = taskId;
         this.memberId = memberId;
         this.completedAt = LocalDateTime.now();

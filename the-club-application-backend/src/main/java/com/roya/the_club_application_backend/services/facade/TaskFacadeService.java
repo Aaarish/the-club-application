@@ -24,7 +24,7 @@ public class TaskFacadeService {
     private final CommonUtils commonUtils;
 
     public AppResponse createTask(String roomId, TaskRequest request, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsARoomMember(userId, roomId);
+        commonUtils.checkIfUserIsARoomMember(roomId, userId);
         TaskResponse task = taskService.createTask(roomId, request, userId);
 
         return AppResponse.builder()
@@ -36,7 +36,7 @@ public class TaskFacadeService {
     }
 
     public AppResponse getTask(String roomId, String taskId, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsARoomMember(userId, roomId);
+        commonUtils.checkIfUserIsARoomMember(roomId, userId);
         TaskResponse task = taskService.getTask(taskId);
 
         return AppResponse.builder()

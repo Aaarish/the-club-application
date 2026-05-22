@@ -23,7 +23,7 @@ public interface MemberDao extends JpaRepository<Member, String> {
 
     Optional<Member> findByRoomIdAndUserIdAndMemberDegree(String roomId, String userId, MemberDegree moderator);
 
-    Optional<Member> findByClubIdAndUserId(String clubId, String userId);
+    List<Member> findByClubIdAndUserId(String clubId, String userId);
 
     List<Member> findByClubId(String clubId);
 
@@ -32,5 +32,8 @@ public interface MemberDao extends JpaRepository<Member, String> {
     Optional<Member> findByRoomIdAndUserId(String roomId, String userId);
 
     void deleteByRoomIdAndUserId(String roomId, String userId);
+
+    @Query("SELECT m FROM Member m WHERE m.clubId = :clubId AND m.userId = :userId AND (m.memberDegree = 'CLUB_OWNER' OR m.memberDegree = 'CLUB_MANAGER')")
+    Optional<Member> checkIfUserIsEitherOwnerOrManagerOfClub(String clubId, String userId);
 
 }

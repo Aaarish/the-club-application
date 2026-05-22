@@ -52,7 +52,7 @@ public class GlobalDao {
                 .joinedAt(rs.getTimestamp("joined_at") != null
                         ? rs.getTimestamp("joined_at").toLocalDateTime()
                         : null)
-                .memberDegree(rs.getInt("member_degree"))
+                .memberDegree(rs.getString("member_degree"))
                 .numOfMissedTasksInRow(rs.getInt("num_of_missed_tasks_in_a_row"))
                 .numOfMissedTasksInTotal(rs.getInt("num_of_missed_tasks_in_total"))
                 .build();

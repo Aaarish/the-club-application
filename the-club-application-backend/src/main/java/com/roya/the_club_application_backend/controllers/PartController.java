@@ -21,7 +21,7 @@ public class PartController {
 
     @PostMapping
     public ResponseEntity<AppResponse> addPartToTask(@PathVariable String taskId, @PathVariable String roomId, @RequestBody PartRequest request, @AuthenticationPrincipal AuthUser user) throws ResourceNotFoundException {
-        return ResponseEntity.status(HttpStatus.CREATED).body(partFacadeService.addPartToTask(taskId, roomId, request.getProof(), request.getNote(), user.getAppUser().getUserId()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(partFacadeService.addPartToTask(taskId, roomId, request.getNote(), user.getAppUser().getUserId()));
     }
 
     @GetMapping

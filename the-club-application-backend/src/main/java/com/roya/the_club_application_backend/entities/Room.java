@@ -70,8 +70,11 @@ public class Room implements Persistable<String> {
                 .roomId(this.roomId)
                 .name(this.name)
                 .description(this.description)
+                .themeImage(this.themeImage)
                 .createdAt(this.createdAt)
                 .clubId(this.clubId)
+                .maxNumOfMissedTasksInRow(this.maxNumOfMissedTasksInRow)
+                .maxNumOfMissedTasksInTotal(this.maxNumOfMissedTasksInTotal)
                 .build();
     }
 

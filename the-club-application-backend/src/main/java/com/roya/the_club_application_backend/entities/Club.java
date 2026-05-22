@@ -63,6 +63,7 @@ public class Club implements Persistable<String> {
                 .logo(this.logo)
                 .description(this.description)
                 .ownerId(this.ownerId)
+                .defaultRoomId(this.defaultRoomId)
                 .createdAt(this.createdAt)
                 .build();
     }

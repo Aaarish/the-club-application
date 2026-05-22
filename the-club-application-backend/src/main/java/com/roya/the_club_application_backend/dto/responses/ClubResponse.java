@@ -17,6 +17,7 @@ public class ClubResponse {
     private String logo;
     private String description;
     private String ownerId;
+    private String defaultRoomId;
     private LocalDateTime createdAt;
 
 }

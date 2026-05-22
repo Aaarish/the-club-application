@@ -9,7 +9,7 @@ import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundE
 import java.util.List;
 
 public interface RoomService {
-    RoomResponse createRoom(String clubId, RoomRequest request, String userId);
+    RoomResponse createRoom(String clubId, RoomRequest request, String userId) throws ResourceNotFoundException;
 
     RoomResponse getRoom(String roomId) throws ResourceNotFoundException;
 
@@ -21,4 +21,5 @@ public interface RoomService {
 
     List<MemberResponse> getRoomMembers(String roomId) throws ResourceNotFoundException;
 
+    List<RoomResponse> getRoomsOfClub(String clubId);
 }

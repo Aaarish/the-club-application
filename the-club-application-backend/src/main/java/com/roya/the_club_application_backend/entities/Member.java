@@ -99,10 +99,11 @@ public class Member implements Persistable<String> {
     public MemberResponse toResponse() {
         return MemberResponse.builder()
                 .memberId(this.getMemberId())
-                .roomId(this.roomId)
                 .userId(this.userId)
+                .roomId(this.roomId)
+                .clubId(this.clubId)
                 .joinedAt(this.getJoinedAt())
-                .memberDegree(this.getMemberDegree().getMemberDegree())
+                .memberDegree(this.getMemberDegree().name())
                 .numOfMissedTasksInRow(this.getNumOfMissedTasksInRow())
                 .numOfMissedTasksInTotal(this.getNumOfMissedTasksInTotal())
                 .build();

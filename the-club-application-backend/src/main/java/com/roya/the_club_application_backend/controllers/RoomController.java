@@ -2,6 +2,7 @@ package com.roya.the_club_application_backend.controllers;
 
 import com.roya.the_club_application_backend.auth.AuthUser;
 import com.roya.the_club_application_backend.dto.requests.RoomRequest;
+import com.roya.the_club_application_backend.global.exceptions.ActionDeniedException;
 import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundException;
 import com.roya.the_club_application_backend.global.responses.AppResponse;
 import com.roya.the_club_application_backend.global.responses.DeleteResponse;
@@ -22,7 +23,7 @@ public class RoomController {
     // fix all controller methods to get userId from security context instead of request param, and remove userId from method params
 
     @PostMapping
-    public ResponseEntity<AppResponse> createRoom(@PathVariable String clubId, @RequestBody RoomRequest request, @AuthenticationPrincipal AuthUser user) throws AccessDeniedException {
+    public ResponseEntity<AppResponse> createRoom(@PathVariable String clubId, @RequestBody RoomRequest request, @AuthenticationPrincipal AuthUser user) throws AccessDeniedException, ResourceNotFoundException, ActionDeniedException {
         return ResponseEntity.ok(roomFacadeService.createRoom(clubId, request, user.getAppUser()));
     }
 
@@ -32,13 +33,18 @@ public class RoomController {
     }
 
     @PutMapping("/{roomId}")
-    public ResponseEntity<AppResponse> updateRoom(@PathVariable String roomId, @RequestBody RoomRequest request, @AuthenticationPrincipal AuthUser user) throws AccessDeniedException, ResourceNotFoundException {
+    public ResponseEntity<AppResponse> updateRoom(@PathVariable String roomId, @RequestBody RoomRequest request, @AuthenticationPrincipal AuthUser user) throws AccessDeniedException, ResourceNotFoundException, ActionDeniedException {
         return ResponseEntity.ok(roomFacadeService.updateRoom(roomId, request, user.getAppUser()));
     }
 
     @DeleteMapping("/{roomId}")
     public ResponseEntity<DeleteResponse> deleteRoom(@PathVariable String roomId, @AuthenticationPrincipal AuthUser user) throws AccessDeniedException, ResourceNotFoundException {
         return ResponseEntity.ok(roomFacadeService.deleteRoom(roomId, user.getAppUser()));
+    }
+
+    @GetMapping
+    public ResponseEntity<AppResponse> getRoomsOfClub(@PathVariable String clubId, @AuthenticationPrincipal AuthUser user) throws ResourceNotFoundException {
+        return ResponseEntity.ok(roomFacadeService.getRoomsOfClub(clubId, user.getAppUser().getUserId()));
     }
 
     @GetMapping("/{roomId}/members")

@@ -10,6 +10,7 @@ import com.roya.the_club_application_backend.entities.Room;
 import com.roya.the_club_application_backend.entities.Member;
 import com.roya.the_club_application_backend.global.GlobalDao;
 import com.roya.the_club_application_backend.global.OperationLevel;
+import com.roya.the_club_application_backend.global.exceptions.ActionDeniedException;
 import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,9 +46,18 @@ public class CommonUtils {
         return memberDao.save(member);
     }
 
-    public Member createFirstRoomMember(String userId, String roomId, String clubId) {
+    public List<Member> createPrimaryRoomMembers(String userId, String roomId, String clubId) throws ResourceNotFoundException {
+        Member clubOwner = addClubOwnerToRoom(clubId, roomId);
+        if (clubOwner.getUserId().equals(userId)) {
+            return List.of(clubOwner);
+        }
         Member member = new Member(userId, roomId, clubId, MODERATOR);
-        return memberDao.save(member);
+        return memberDao.saveAll(List.of(clubOwner, member));
+    }
+
+    private Member addClubOwnerToRoom(String clubId, String roomId) throws ResourceNotFoundException {
+        Club club = findClubById(clubId);
+        return new Member(club.getOwnerId(), roomId, clubId, CLUB_OWNER);
     }
 
     public void checkIfUserIsOwnerOfClub(String userId, String clubId) throws AccessDeniedException {
@@ -60,14 +70,18 @@ public class CommonUtils {
                 .orElseThrow(() -> new AccessDeniedException("User with id: " + userId + " is not a manager of club: " + clubId));
     }
 
-    public void checkIfUserIsAModerator(String userId, String roomId) throws AccessDeniedException, ResourceNotFoundException {
+    public void checkIfUserIsEitherOwnerOrManagerOfClub(String userId, String clubId) throws AccessDeniedException {
+        memberDao.checkIfUserIsEitherOwnerOrManagerOfClub(clubId, userId)
+                .orElseThrow(() -> new AccessDeniedException("User with id: " + userId + " is not an owner or a manager of club: " + clubId));
+    }
+
+    public void checkIfUserIsAModerator(String userId, String roomId) throws AccessDeniedException {
         memberDao.findByRoomIdAndUserIdAndMemberDegree(roomId, userId, MODERATOR)
                 .orElseThrow(() -> new AccessDeniedException("User with id: " + userId + " is not a moderator of room with id: " + roomId));
     }
 
-    public void checkIfUserIsARoomMember(String userId, String roomId) throws AccessDeniedException {
-        String memberId = userId + "__" + roomId;
-        memberDao.findByIdAndRole(memberId, MEMBER)
+    public void checkIfUserIsARoomMember(String roomId, String userId) throws AccessDeniedException {
+        memberDao.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new AccessDeniedException("User with id: " + userId + " is not a member of room with id: " + roomId));
     }
 
@@ -93,9 +107,10 @@ public class CommonUtils {
         roomDao.deleteByRoomId(roomId);
     }
 
-    public void findMemberByClubIdAndUserId(String clubId, String userId) throws ResourceNotFoundException {
-        memberDao.findByClubIdAndUserId(clubId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException(OperationLevel.CLUB, "No member found with user id: " + userId + " in club with id: " + clubId));
+    public Member findMemberByClubIdAndUserId(String clubId, String userId) throws ResourceNotFoundException {
+        return memberDao.findByClubIdAndUserId(clubId, userId).stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException(OperationLevel.CLUB, "No member found with user id: " + userId + " in club: " + clubId));
     }
 
     public Member findMemberByRoomIdAndUserId(String roomId, String userId) throws ResourceNotFoundException {
@@ -119,6 +134,20 @@ public class CommonUtils {
 
     public void deleteRoomMember(String roomId, String userId) {
         memberDao.deleteByRoomIdAndUserId(roomId, userId);
+    }
+
+    public void checkIfClubMemberDegreeIsHigherThan(String userId, String clubId, int memberDegree) throws ResourceNotFoundException, ActionDeniedException {
+        Member member = findMemberByClubIdAndUserId(clubId, userId);
+        if (member.getMemberDegree().getMemberDegree() <= memberDegree) {
+            throw new ActionDeniedException(OperationLevel.CLUB, "User with id: " + userId + " does not have sufficient permissions in club: " + clubId);
+        }
+    }
+
+    public void checkIfRoomMemberDegreeIsHigherThan(String userId, String roomId, int memberDegree) throws ResourceNotFoundException, ActionDeniedException {
+        Member member = findMemberByRoomIdAndUserId(roomId, userId);
+        if (member.getMemberDegree().getMemberDegree() <= memberDegree) {
+            throw new ActionDeniedException(OperationLevel.ROOM, "User with id: " + userId + " does not have sufficient permissions in room: " + roomId);
+        }
     }
 
 }

@@ -57,7 +57,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public MemberResponse addClubMember(Club club, String userIdForMember) throws ResourceNotFoundException {
+    public MemberResponse addClubMember(Club club, String userIdForMember) {
         String defaultRoomId = club.getDefaultRoomId();
 
         Member member = new Member(userIdForMember, defaultRoomId, club.getClubId(), MemberDegree.MEMBER);

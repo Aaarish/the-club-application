@@ -6,7 +6,6 @@ import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundE
 import com.roya.the_club_application_backend.global.responses.AppResponse;
 import com.roya.the_club_application_backend.global.responses.DeleteResponse;
 import com.roya.the_club_application_backend.services.facade.ClubFacadeService;
-import com.roya.the_club_application_backend.services.facade.RoomFacadeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

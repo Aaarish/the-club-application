@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -24,7 +26,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponse createTask(String roomId, TaskRequest request, String userId) {
-        Task task = new Task(roomId, request.getDescription(), userId, request.getToBeCompletedAt());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        LocalDateTime toBeCompletedAt = LocalDateTime.parse(request.getToBeCompletedAt(), formatter);
+
+        Task task = new Task(roomId, request.getDescription(), userId, toBeCompletedAt);
         Task savedTask = taskDao.save(task);
 
         return savedTask.toResponse();
@@ -41,7 +46,9 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskById(taskId);
 
         if (request.getDescription() != null) task.changeDesc(request.getDescription());
-        if (request.getToBeCompletedAt() != null) task.changeExpiry(request.getToBeCompletedAt());
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        LocalDateTime toBeCompletedAt = LocalDateTime.parse(request.getToBeCompletedAt(), formatter);
+        if (request.getToBeCompletedAt() != null) task.changeExpiry(toBeCompletedAt);
 
         Task updatedTask = taskDao.save(task);
         return updatedTask.toResponse();

@@ -7,6 +7,6 @@ import java.time.LocalDateTime;
 @Getter
 public class TaskRequest {
     private String description;
-    private LocalDateTime toBeCompletedAt;
+    private String toBeCompletedAt;
 
 }

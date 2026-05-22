@@ -30,8 +30,8 @@ public class PartServiceImpl implements PartService {
     }
 
     @Override
-    public PartResponse addPartToTask(String taskId, String memberId, Object proof, String note) {
-        Part part = new Part(taskId, memberId, proof, note);
+    public PartResponse addPartToTask(String taskId, String memberId, String note) {
+        Part part = new Part(taskId, memberId, note);
         Part savedPart = partDao.save(part);
         return savedPart.toResponse();
     }

@@ -6,7 +6,7 @@ import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundE
 import java.util.List;
 
 public interface PartService {
-    PartResponse addPartToTask(String taskId, String memberId, Object proof, String note);
+    PartResponse addPartToTask(String taskId, String memberId, String note);
 
     List<PartResponse> getAllPartsForTask(String taskId);
 

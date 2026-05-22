@@ -5,6 +5,7 @@ import com.roya.the_club_application_backend.dao.RoomDao;
 import com.roya.the_club_application_backend.dto.requests.RoomRequest;
 import com.roya.the_club_application_backend.dto.responses.MemberResponse;
 import com.roya.the_club_application_backend.dto.responses.RoomResponse;
+import com.roya.the_club_application_backend.entities.Club;
 import com.roya.the_club_application_backend.entities.Room;
 import com.roya.the_club_application_backend.global.OperationLevel;
 import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundException;
@@ -22,9 +23,9 @@ public class RoomServiceImpl implements RoomService {
     private final CommonUtils commonUtils;
 
     @Override
-    public RoomResponse createRoom(String clubId, RoomRequest request, String userId) {
+    public RoomResponse createRoom(String clubId, RoomRequest request, String userId) throws ResourceNotFoundException {
         Room room = new Room(request.getName(), request.getDescription(), clubId);
-        commonUtils.createFirstRoomMember(userId, room.getRoomId(), clubId);
+        commonUtils.createPrimaryRoomMembers(userId, room.getRoomId(), clubId);
 
         Room savedRoom = roomDao.save(room);
         return savedRoom.toResponse();
@@ -73,6 +74,13 @@ public class RoomServiceImpl implements RoomService {
 //                .map(RoomMember::toResponse)
 //                .toList();
         return null;
+    }
+
+    @Override
+    public List<RoomResponse> getRoomsOfClub(String clubId) {
+        return commonUtils.findRoomsByClubId(clubId).stream()
+                .map(Room::toResponse)
+                .toList();
     }
 
     private Room getRoomById(String roomId) throws ResourceNotFoundException {

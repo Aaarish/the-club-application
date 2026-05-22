@@ -4,6 +4,8 @@ import com.roya.the_club_application_backend.auth.AppUser;
 import com.roya.the_club_application_backend.dto.requests.RoomRequest;
 import com.roya.the_club_application_backend.dto.responses.MemberResponse;
 import com.roya.the_club_application_backend.dto.responses.RoomResponse;
+import com.roya.the_club_application_backend.entities.Member;
+import com.roya.the_club_application_backend.global.exceptions.ActionDeniedException;
 import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundException;
 import com.roya.the_club_application_backend.global.responses.AppResponse;
 import com.roya.the_club_application_backend.global.responses.DeleteResponse;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
 
+import static com.roya.the_club_application_backend.entities.Member.MemberDegree.MODERATOR;
 import static com.roya.the_club_application_backend.global.OperationLevel.CLUB;
 import static com.roya.the_club_application_backend.global.OperationLevel.ROOM;
 
@@ -24,8 +27,8 @@ public class RoomFacadeService {
     private final RoomService roomService;
     private final CommonUtils commonUtils;
 
-    public AppResponse createRoom(String clubId, RoomRequest request, AppUser user) throws AccessDeniedException {
-        commonUtils.checkIfUserIsManagerOfClub(user.getUserId(), clubId);
+    public AppResponse createRoom(String clubId, RoomRequest request, AppUser user) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfClubMemberDegreeIsHigherThan(user.getUserId(), clubId, MODERATOR.getMemberDegree());
         RoomResponse room = roomService.createRoom(clubId, request, user.getUserId());
 
         return AppResponse.builder()
@@ -48,8 +51,8 @@ public class RoomFacadeService {
                 .build();
     }
 
-    public AppResponse updateRoom(String roomId, RoomRequest request, AppUser user) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsManagerOfClub(roomId, user.getUserId());
+    public AppResponse updateRoom(String roomId, RoomRequest request, AppUser user) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(user.getUserId(), roomId, MODERATOR.getMemberDegree());
         RoomResponse room = roomService.updateRoom(roomId, request);
 
         return AppResponse.builder()
@@ -72,7 +75,7 @@ public class RoomFacadeService {
     }
 
     public AppResponse getRoomMembers(String roomId, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsARoomMember(userId, roomId);
+        commonUtils.checkIfUserIsARoomMember(roomId, userId);
         List<MemberResponse> roomMembers = roomService.getRoomMembers(roomId);
 
         return AppResponse.builder()
@@ -87,4 +90,15 @@ public class RoomFacadeService {
         return getRoomMembers(clubId, userId);
     }
 
+    public AppResponse getRoomsOfClub(String clubId, String userId) throws ResourceNotFoundException {
+        commonUtils.findMemberByClubIdAndUserId(clubId, userId);
+        List<RoomResponse> rooms = roomService.getRoomsOfClub(clubId);
+
+        return AppResponse.builder()
+                .source(ROOM)
+                .isSuccess(true)
+                .response(rooms)
+                .message("Rooms of club: " + clubId + " have been retrieved successfully.")
+                .build();
+    }
 }

@@ -2,8 +2,11 @@ package com.roya.the_club_application_backend.services.facade;
 
 import com.roya.the_club_application_backend.dto.responses.MemberResponse;
 import com.roya.the_club_application_backend.entities.Club;
+import com.roya.the_club_application_backend.entities.Member;
 import com.roya.the_club_application_backend.entities.Member.MemberDegree;
 import com.roya.the_club_application_backend.entities.Room;
+import com.roya.the_club_application_backend.global.OperationLevel;
+import com.roya.the_club_application_backend.global.exceptions.ActionDeniedException;
 import com.roya.the_club_application_backend.global.exceptions.ResourceNotFoundException;
 import com.roya.the_club_application_backend.global.responses.AppResponse;
 import com.roya.the_club_application_backend.global.responses.DeleteResponse;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static com.roya.the_club_application_backend.entities.Member.MemberDegree.CLUB_MANAGER;
 import static com.roya.the_club_application_backend.entities.Member.MemberDegree.MODERATOR;
-import static com.roya.the_club_application_backend.global.OperationLevel.MEMBER;
+import static com.roya.the_club_application_backend.entities.Member.MemberDegree.MEMBER;
 import static com.roya.the_club_application_backend.global.OperationLevel.ROOM;
 
 @Service
@@ -26,8 +29,8 @@ public class MemberFacadeService {
     private final MemberService memberService;
     private final CommonUtils commonUtils;
 
-    public AppResponse addClubMember(String clubId, String userIdForMember, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsManagerOfClub(userId, clubId);
+    public AppResponse addClubMember(String clubId, String userIdForMember, String userId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfClubMemberDegreeIsHigherThan(userId, clubId, MEMBER.getMemberDegree());
         Club club = commonUtils.findClubById(clubId);
 
         MemberResponse memberResponse = memberService.addClubMember(club, userIdForMember);
@@ -40,8 +43,12 @@ public class MemberFacadeService {
                 .build();
     }
 
-    public AppResponse addRoomMember(String clubId, String roomId, String userIdForMember, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsAModerator(userId, roomId);
+    public AppResponse addRoomMember(String clubId, String roomId, String userIdForMember, String userId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(userId, roomId, MEMBER.getMemberDegree());
+        Member clubMember = commonUtils.findMemberByClubIdAndUserId(userId, clubId);
+        if (clubMember == null) {
+            throw new ActionDeniedException(OperationLevel.MEMBER, "User with id: " + userId + " is not a member of club: " + clubId);
+        }
 
         MemberResponse memberResponse = memberService.addRoomMember(clubId, userIdForMember, roomId);
 
@@ -57,14 +64,14 @@ public class MemberFacadeService {
         MemberResponse member = memberService.getMemberByMemberId(memberId);
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .response(member)
                 .message("Member: " + memberId + " has been retrieved successfully.")
                 .build();
     }
 
-    public AppResponse promoteMemberDegree(String roomId, String memberId, String degree, String promoterUserId) throws AccessDeniedException, ResourceNotFoundException {
+    public AppResponse promoteMemberDegree(String roomId, String memberId, String degree, String promoterUserId) throws ResourceNotFoundException, ActionDeniedException {
         if (degree.equals(MODERATOR.name())){
             promoteMemberToModerator(roomId, memberId, promoterUserId);
         } else if (degree.equals(CLUB_MANAGER.name())) {
@@ -74,74 +81,74 @@ public class MemberFacadeService {
         }
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .message("Member: " + memberId + " has been promoted to " + degree.toLowerCase().replace("_", " ") + " successfully.")
                 .build();
     }
 
-    public AppResponse demoteMemberDegree(String roomId, String memberId, String degree, String promoterUserId) throws AccessDeniedException, ResourceNotFoundException {
+    public AppResponse demoteMemberDegree(String roomId, String memberId, String degree, String demoterUserId) throws ResourceNotFoundException, ActionDeniedException {
         if (degree.equals(CLUB_MANAGER.name())) {
-            demoteClubManagerToModerator(roomId, memberId, promoterUserId);
+            demoteClubManagerToModerator(roomId, memberId, demoterUserId);
         } else if (degree.equals(MODERATOR.name())) {
-            demoteModeratorToMember(roomId, memberId, promoterUserId);
+            demoteModeratorToMember(roomId, memberId, demoterUserId);
         } else {
             throw new IllegalArgumentException("Invalid degree: " + degree);
         }
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .message("Member with id: " + memberId + " has been demoted to " + degree.toLowerCase().replace("_", " ") + " successfully.")
                 .build();
     }
 
-    public AppResponse promoteMemberToModerator(String roomId, String memberId, String promoterUserId) throws ResourceNotFoundException, AccessDeniedException {
-        commonUtils.checkIfUserIsAModerator(promoterUserId, roomId);
+    public AppResponse promoteMemberToModerator(String roomId, String memberId, String promoterUserId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(promoterUserId, roomId, MEMBER.getMemberDegree());
         memberService.changeMemberDegree(memberId, MODERATOR);
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .message("Member with id: " + memberId + " has been promoted to moderator successfully.")
                 .build();
     }
 
-    public AppResponse promoteModeratorToClubManager(String roomId, String memberId, String promoterUserId) throws ResourceNotFoundException, AccessDeniedException {
-        commonUtils.checkIfUserIsManagerOfClub(promoterUserId, roomId);
+    public AppResponse promoteModeratorToClubManager(String roomId, String memberId, String promoterUserId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(promoterUserId, roomId, MODERATOR.getMemberDegree());
         memberService.changeMemberDegree(memberId, CLUB_MANAGER);
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .message("Moderator with id: " + memberId + " has been promoted to club manager successfully.")
                 .build();
     }
 
-    public AppResponse demoteClubManagerToModerator(String roomId, String memberId, String demoterUserId) throws ResourceNotFoundException, AccessDeniedException {
-        commonUtils.checkIfUserIsManagerOfClub(demoterUserId, roomId);
+    public AppResponse demoteClubManagerToModerator(String roomId, String memberId, String demoterUserId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(demoterUserId, roomId, MODERATOR.getMemberDegree());
         memberService.changeMemberDegree(memberId, MODERATOR);
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .message("Club manager with id: " + memberId + " has been demoted to moderator successfully.")
                 .build();
     }
 
-    public AppResponse demoteModeratorToMember(String roomId, String memberId, String demoterUserId) throws ResourceNotFoundException, AccessDeniedException {
-        commonUtils.checkIfUserIsAModerator(demoterUserId, roomId);
+    public AppResponse demoteModeratorToMember(String roomId, String memberId, String demoterUserId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(demoterUserId, roomId, MEMBER.getMemberDegree());
         memberService.changeMemberDegree(memberId, MemberDegree.MEMBER);
 
         return AppResponse.builder()
-                .source(MEMBER)
+                .source(OperationLevel.MEMBER)
                 .isSuccess(true)
                 .message("Moderator with id: " + memberId + " has been demoted to member successfully.")
                 .build();
     }
 
-    public DeleteResponse removeRoomMember(String roomId, String memberId, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsAModerator(userId, roomId);
+    public DeleteResponse removeRoomMember(String roomId, String memberId, String userId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfRoomMemberDegreeIsHigherThan(userId, roomId, MEMBER.getMemberDegree());
         memberService.removeMember(memberId);
 
         return DeleteResponse.builder()
@@ -151,8 +158,8 @@ public class MemberFacadeService {
                 .build();
     }
 
-    public DeleteResponse removeClubMember(String clubId, String userIdForMember, String userId) throws AccessDeniedException, ResourceNotFoundException {
-        commonUtils.checkIfUserIsManagerOfClub(userId, clubId);
+    public DeleteResponse removeClubMember(String clubId, String userIdForMember, String userId) throws ResourceNotFoundException, ActionDeniedException {
+        commonUtils.checkIfClubMemberDegreeIsHigherThan(userId, clubId, MODERATOR.getMemberDegree());
         List<Room> clubRooms = commonUtils.findRoomsByClubId(clubId);
 
         for (Room room : clubRooms) {
